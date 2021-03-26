@@ -1,0 +1,20 @@
+.local{
+  height:200px;
+  width:200px;
+  z-index: 1;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.remote
+{
+
+  align-items: center;
+  justify-content: center;
+  z-index: -1;
+}
+
+.flex-container{
+    display: flex;
+    width: 100%;
+}

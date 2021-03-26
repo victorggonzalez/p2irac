@@ -7,10 +7,14 @@ window.onbeforeunload = function(e){
 }
 
 // Data channel information
-var sendChannel, receiveChannel;
+var sendChannel, receiveChannel, chatChannel;
 var sendButton = document.getElementById("sendButton");
 var sendTextarea = document.getElementById("dataChannelSend");
 var receiveTextarea = document.getElementById("dataChannelReceive");
+var chatArea = document.getElementById("chatArea");
+
+var chatOutput = document.getElementById("chat-output");
+var chatInput = document.getElementById('chat-input');
 
 // HTML5 <video> elements
 var localVideo = document.querySelector('#localVideo');
@@ -243,8 +247,10 @@ function createPeerConnection() {
 // Data channel management
 function sendData() {
   var data = sendTextarea.value;
-  if(isInitiator) sendChannel.send(data);
-  else receiveChannel.send(data);
+  if(isInitiator){
+    sendChannel.send(data);
+    chatChannel.send(data);
+  } else receiveChannel.send(data);
   trace('Sent data: ' + data);
 }
 
@@ -256,11 +262,17 @@ function gotReceiveChannel(event) {
   receiveChannel.onmessage = handleMessage;
   receiveChannel.onopen = handleReceiveChannelStateChange;
   receiveChannel.onclose = handleReceiveChannelStateChange;
+  trace('gotReceiveChannel');
+
 }
 
 function handleMessage(event) {
   trace('Received message: ' + event.data);
   receiveTextarea.value += event.data + '\n';
+  chatArea.value += event.data + '\n';
+  trace('handleMessage');
+
+
 }
 
 function handleSendChannelStateChange() {
@@ -272,6 +284,9 @@ function handleSendChannelStateChange() {
     dataChannelSend.focus();
     dataChannelSend.placeholder = "";
     sendButton.disabled = false;
+    chatInput.disabled = false;
+    chatInput.value = 'Hi, ' + userid;
+    chatInput.focus();
   } else {
     dataChannelSend.disabled = true;
     sendButton.disabled = true;
