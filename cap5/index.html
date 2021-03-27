@@ -1,51 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>Very simple WebRTC application with a Node.js signalling server</title>
+	<meta charset="utf-8"/>
+	<title>Very simple WebRTC application with a Node.js signalling server</title>
+	<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 	<h1 align="center">BIENVENIDO A LA APLICACION DE VIDEOLLAMADA DEL EQUIPO 19</h1>
 
-<div id='mainDiv'>
+	<div id='mainDiv'>
+		<div class="videospace">
+			<video id="localVideo" muted autoplay class="localvideoarea"></video>
+			<video id="remoteVideo" autoplay class="remotevideoarea"></video>
+		</div>
+		<div class="chatspace">
 
-	<table border="1" width="100%">
-		<tr>
-			<th>
-				Local video
-			</th>
-			<th>
-				'Remote' video
-			</th>
-		</tr>
-		<tr>
-			<td>
-				<video id="localVideo" muted autoplay></video>
-			</td>
-			<td>
-				<video id="remoteVideo" autoplay></video>
-			</td>
-		</tr>
-		<tr>
-			<td align="center">
-				<textarea rows="4" cols="60" id="dataChannelSend" disabled
-			placeholder="This will be enabled once the data channel is up..."></textarea>
-			</td>
-			<td align="center">
-				<textarea rows="4" cols="60" id="dataChannelReceive" disabled></textarea>
-			</td>
-		</tr>
-		<tr>
-			<td align="center">
-				<button id="sendButton" disabled>Send</button>
-			</td>
-			<td></td>
-		</tr>
-	</table>
+			<table>
+
+				<tr>
+					<td align="center">
+						<textarea rows="25" cols="35" id="dataChannelReceive" disabled></textarea>
+					</td>
+				</tr>
+				<tr>
+					<td align="center">
+						<textarea rows="4" cols="35" id="dataChannelSend" disabled
+						placeholder="This will be enabled once the data channel is up..."></textarea>
+					</td>
+				</tr>
+			</table>
+
+
+			<button id="sendButton" disabled >Send</button>
+
+
+
+
+		</div>
+		<div class="filespace">
+				<div style="text-align: center;">
+					<form id="fileInfo">
+						<input type="file" id="fileInput" name="files" disabled/>
+					</form>
+					<button disabled id="sendFile">Send</button>
+				</div>
+				<div class="progress">
+					<div class="label">Send progress: </div>
+					<progress id="sendProgress" max="0" value="0"></progress>
+				</div>
+
+				<div class="progress">
+	<div class="label">Receive progress: </div>
+	<progress id="receiveProgress" max="0" value="0"></progress>
 </div>
 
-<script src='/socket.io/socket.io.js'></script>
-<script src='js/completeNodeClientWithDataChannel.js'></script>
+				<a id="download"></a>
+				<span id="status"></span>
+		</div>
 
-</body>
-</html>
+
+
+
+
+
+		<table style="width: 100%;" id="channels-list"></table>
+		<table style="width: 100%;">
+
+
+
+
+
+
+
+
+		</div>
+		<script src='/socket.io/socket.io.js'></script>
+		<script src='js/completeNodeClientWithDataChannel.js'></script>
+
+	</body>
+	</html>
