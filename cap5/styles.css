@@ -40,16 +40,16 @@
   float: left;
 }
 .localvideoarea{
-  height: 180px;
-  width: 200px;
+  height: 160px;
+  width: 213px;
   float: left;
   border: 3px solid white;
 }
 .remotevideoarea{
   position: absolute;
-  left: 0px;
-  height: 600px;
-  width: 800px;
+  left: 8px;
+  height: 720px;
+  width: 960px;
   z-index: -1;
 }
 
