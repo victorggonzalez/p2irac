@@ -16,6 +16,10 @@ form {
 progress {
   width: calc(100% - 8.5em);
 }
+body{
+  background-color: #CCF;
+
+}
 
 
 
@@ -41,6 +45,7 @@ textarea {
   align-items: center;
   float: left;
   background-color: #CCF;
+  margin-bottom: 20px;
 }
 
 .videospace{
@@ -67,10 +72,15 @@ textarea {
 
 
 .filespace{
-  height: 100px;
-  width: 100%;
-  background-color: #FF9;
+  background-color: grey;
   clear: both;
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-right: 10px;
+
+
+
 }
 .footer{
   height: 100px;

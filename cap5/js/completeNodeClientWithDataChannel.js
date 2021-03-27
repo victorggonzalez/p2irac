@@ -261,13 +261,12 @@ socket.on('message', function (message){
         sendChannel.onmessage = handleMessage;
         sendChannel.onclose = handleSendChannelStateChange;
         sendFileChannel.onopen = handleSendChannelStateChange;
-        sendFileChannel.onmessage = handleFile;
+        sendFileChannel.onmessage = onReceiveMessageCallback;
         sendFileChannel.onclose = handleSendChannelStateChange;
       } else { // Joiner
         pc.ondatachannel = gotReceiveChannel;
         receiveFileChannel = pc.createDataChannel("fileChannel",
         {negotiated: true, id: 2});
-        receiveFileChannel.binaryType = 'arraybuffer';
         receiveFileChannel.onmessage = onReceiveMessageCallback;
         receiveFileChannel.onopen = onReceiveChannelStateChange;
         receiveFileChannel.onclose = onReceiveChannelStateChange;
@@ -303,14 +302,27 @@ socket.on('message', function (message){
       trace('Sending file');
       const file = fileInput.files[0];
       console.log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
-      sendFileChannel.send(JSON.stringify({
-        fileName: file.name,
-        fileSize: file.size
-      }));
-      trace(JSON.stringify({
-              fileName: file.name,
-              fileSize: file.size
-            }));
+      if(isInitiator){
+        sendFileChannel.send(JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size
+        }));
+        trace(JSON.stringify({
+                fileName: file.name,
+                fileSize: file.size
+              }));
+      } else{
+        receiveFileChannel.send(JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size
+        }));
+        trace(JSON.stringify({
+                fileName: file.name,
+                fileSize: file.size
+              }));
+      }
+
+
       // Handle 0 size files.
       statusMessage.textContent = '';
       downloadAnchor.textContent = '';
@@ -328,7 +340,12 @@ socket.on('message', function (message){
       const chunkSize = 16384;
       fileReader.addEventListener('load', e => {
         console.log('FileRead.onload ', e);
-        sendFileChannel.send(e.target.result);
+        if(isInitiator){
+          sendFileChannel.send(e.target.result);
+        } else{
+          receiveFileChannel.send(e.target.result);
+
+        }
         offset += e.target.result.byteLength;
         sendProgress.value = offset;
         if (offset < file.size) {
