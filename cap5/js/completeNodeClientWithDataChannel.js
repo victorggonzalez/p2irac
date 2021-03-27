@@ -303,6 +303,7 @@ socket.on('message', function (message){
       const file = fileInput.files[0];
       console.log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
 
+
       // Handle 0 size files.
       statusMessage.textContent = '';
       downloadAnchor.textContent = '';
@@ -335,8 +336,6 @@ socket.on('message', function (message){
       readSlice(0);
 
       trace('Sent file: ' + file.name);
-
-
     }
 
 
@@ -348,8 +347,6 @@ socket.on('message', function (message){
       receiveChannel.onmessage = handleMessage;
       receiveChannel.onopen = handleReceiveChannelStateChange;
       receiveChannel.onclose = handleReceiveChannelStateChange;
-
-
     }
 
     function onReceiveMessageCallback(event) {
@@ -357,6 +354,7 @@ socket.on('message', function (message){
       receiveBuffer.push(event.data);
       receivedSize += event.data.byteLength;
       receiveProgress.value = receivedSize;
+      trace('Received size ' + receivedSize);
 
       // we are assuming that our signaling protocol told
       // about the expected file size (and name, hash, etc).
@@ -371,163 +369,153 @@ socket.on('message', function (message){
         `Click to download '${file.name}' (${file.size} bytes)`;
         downloadAnchor.style.display = 'block';
 
-        const bitrate = Math.round(receivedSize * 8 /
-          ((new Date()).getTime() - timestampStart));
-          bitrateDiv.innerHTML =
-          `<strong>Average Bitrate:</strong> ${bitrate} kbits/sec (max: ${bitrateMax} kbits/sec)`;
-
-          if (statsInterval) {
-            clearInterval(statsInterval);
-            statsInterval = null;
-          }
-
-          closeDataChannels();
-        }
       }
 
-
-      async function onReceiveChannelStateChange() {
-  if (receiveFileChannel) {
-    const readyState = receiveFileChannel.readyState;
-    console.log(`Receive channel state is: ${readyState}`);
-    if (readyState === 'open') {
-      timestampStart = (new Date()).getTime();
-      timestampPrev = timestampStart;
     }
-  }
-}
 
 
-      function handleMessage(event) {
-        trace('Received message: ' + event.data);
-        receiveTextarea.value += 'Remote:' + event.data + '\n';
-        trace('handleMessage');
+    async function onReceiveChannelStateChange() {
+      if (receiveFileChannel) {
+        const readyState = receiveFileChannel.readyState;
+        console.log(`Receive channel state is: ${readyState}`);
+        if (readyState === 'open') {
+          timestampStart = (new Date()).getTime();
+          timestampPrev = timestampStart;
+        }
       }
-      function handleFile(event) {
-        trace('Received file: ' + event.data);
-        trace('handleFile');
+    }
+
+
+    function handleMessage(event) {
+      trace('Received message: ' + event.data);
+      receiveTextarea.value += 'Remote:' + event.data + '\n';
+      trace('handleMessage');
+    }
+    function handleFile(event) {
+      trace('Received file: ' + event.data);
+      trace('handleFile');
+    }
+
+
+    function handleSendChannelStateChange() {
+      var readyState = sendChannel.readyState;
+      trace('Send channel state is: ' + readyState);
+      // If channel ready, enable user's input
+      if (readyState == "open") {
+        dataChannelSend.disabled = false;
+        dataChannelSend.focus();
+        dataChannelSend.placeholder = "";
+        sendButton.disabled = false;
+        fileInput.disabled = false;
+        //sendFileButton.disabled =false;
+      } else {
+        dataChannelSend.disabled = true;
+        sendButton.disabled = true;
       }
+    }
 
+    function handleReceiveChannelStateChange() {
+      var readyState = receiveChannel.readyState;
+      trace('Receive channel state is: ' + readyState);
+      // If channel ready, enable user's input
+      if (readyState == "open") {
+        dataChannelSend.disabled = false;
+        dataChannelSend.focus();
+        dataChannelSend.placeholder = "";
+        sendButton.disabled = false;
+        fileInput.disabled = false;
+        //sendFileButton.disabled =false;
 
-      function handleSendChannelStateChange() {
-        var readyState = sendChannel.readyState;
-        trace('Send channel state is: ' + readyState);
-        // If channel ready, enable user's input
-        if (readyState == "open") {
-          dataChannelSend.disabled = false;
-          dataChannelSend.focus();
-          dataChannelSend.placeholder = "";
-          sendButton.disabled = false;
-          fileInput.disabled = false;
-          //sendFileButton.disabled =false;
+      } else {
+        dataChannelSend.disabled = true;
+        sendButton.disabled = true;
+      }
+    }
+
+    //Habilitar el boton de enviar cuando se seleccione un archivo
+    function handleFileInputChange() {
+      const file = fileInput.files[0];
+      if (!file) {
+        console.log('No file chosen');
+      } else {
+        sendFileButton.disabled = false;
+      }
+    }
+
+    // ICE candidates management
+    function handleIceCandidate(event) {
+      console.log('handleIceCandidate event: ', event);
+      if (event.candidate) {
+        sendMessage({
+          type: 'candidate',
+          label: event.candidate.sdpMLineIndex,
+          id: event.candidate.sdpMid,
+          candidate: event.candidate.candidate});
         } else {
-          dataChannelSend.disabled = true;
-          sendButton.disabled = true;
+          console.log('End of candidates.');
         }
       }
 
-      function handleReceiveChannelStateChange() {
-        var readyState = receiveChannel.readyState;
-        trace('Receive channel state is: ' + readyState);
-        // If channel ready, enable user's input
-        if (readyState == "open") {
-          dataChannelSend.disabled = false;
-          dataChannelSend.focus();
-          dataChannelSend.placeholder = "";
-          sendButton.disabled = false;
-          fileInput.disabled = false;
-          //sendFileButton.disabled =false;
-
-        } else {
-          dataChannelSend.disabled = true;
-          sendButton.disabled = true;
-        }
+      // Create Offer
+      function doCall() {
+        console.log('Creating Offer...');
+        pc.createOffer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
       }
 
-      //Habilitar el boton de enviar cuando se seleccione un archivo
-      function handleFileInputChange() {
-        const file = fileInput.files[0];
-        if (!file) {
-          console.log('No file chosen');
-        } else {
-          sendFileButton.disabled = false;
-        }
+      // Signalling error handler
+      function onSignalingError(error) {
+        console.log('Failed to create signaling message : ' + error.name);
       }
 
-      // ICE candidates management
-      function handleIceCandidate(event) {
-        console.log('handleIceCandidate event: ', event);
-        if (event.candidate) {
-          sendMessage({
-            type: 'candidate',
-            label: event.candidate.sdpMLineIndex,
-            id: event.candidate.sdpMid,
-            candidate: event.candidate.candidate});
-          } else {
-            console.log('End of candidates.');
-          }
-        }
+      // Create Answer
+      function doAnswer() {
+        console.log('Sending answer to peer.');
+        pc.createAnswer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
+      }
 
-        // Create Offer
-        function doCall() {
-          console.log('Creating Offer...');
-          pc.createOffer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
-        }
+      // Success handler for both createOffer()
+      // and createAnswer()
+      function setLocalAndSendMessage(sessionDescription) {
+        pc.setLocalDescription(sessionDescription);
+        sendMessage(sessionDescription);
+      }
 
-        // Signalling error handler
-        function onSignalingError(error) {
-          console.log('Failed to create signaling message : ' + error.name);
-        }
+      /////////////////////////////////////////////////////////
+      // Remote stream handlers...
 
-        // Create Answer
-        function doAnswer() {
-          console.log('Sending answer to peer.');
-          pc.createAnswer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
-        }
+      function handleRemoteStreamAdded(event) {
+        console.log('Remote stream added.');
+        //attachMediaStream(remoteVideo, event.streams[0]);
+        remoteVideo.srcObject = event.streams[0];
+        console.log('Remote stream attached!!.');
+        remoteStream = event.stream;
+      }
 
-        // Success handler for both createOffer()
-        // and createAnswer()
-        function setLocalAndSendMessage(sessionDescription) {
-          pc.setLocalDescription(sessionDescription);
-          sendMessage(sessionDescription);
-        }
+      function handleRemoteStreamRemoved(event) {
+        console.log('Remote stream removed. Event: ', event);
+      }
+      /////////////////////////////////////////////////////////
+      // Clean-up functions...
 
-        /////////////////////////////////////////////////////////
-        // Remote stream handlers...
+      function hangup() {
+        console.log('Hanging up.');
+        stop();
+        sendMessage('bye');
+      }
 
-        function handleRemoteStreamAdded(event) {
-          console.log('Remote stream added.');
-          //attachMediaStream(remoteVideo, event.streams[0]);
-          remoteVideo.srcObject = event.streams[0];
-          console.log('Remote stream attached!!.');
-          remoteStream = event.stream;
-        }
+      function handleRemoteHangup() {
+        console.log('Session terminated.');
+        stop();
+        isInitiator = false;
+      }
 
-        function handleRemoteStreamRemoved(event) {
-          console.log('Remote stream removed. Event: ', event);
-        }
-        /////////////////////////////////////////////////////////
-        // Clean-up functions...
+      function stop() {
+        isStarted = false;
+        if (sendChannel) sendChannel.close();
+        if (receiveChannel) receiveChannel.close();
+        if (pc) pc.close();
+        pc = null;
+        sendButton.disabled=true;
+      }
 
-        function hangup() {
-          console.log('Hanging up.');
-          stop();
-          sendMessage('bye');
-        }
-
-        function handleRemoteHangup() {
-          console.log('Session terminated.');
-          stop();
-          isInitiator = false;
-        }
-
-        function stop() {
-          isStarted = false;
-          if (sendChannel) sendChannel.close();
-          if (receiveChannel) receiveChannel.close();
-          if (pc) pc.close();
-          pc = null;
-          sendButton.disabled=true;
-        }
-
-        ///////////////////////////////////////////
+      ///////////////////////////////////////////
