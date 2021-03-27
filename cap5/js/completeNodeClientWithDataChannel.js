@@ -20,7 +20,8 @@ const statusMessage = document.querySelector('span#status');
 
 let receiveBuffer = [];
 let receivedSize = 0;
-
+var downloadInProgress = false;
+var incomingFileInfo;
 let bytesPrev = 0;
 let timestampPrev = 0;
 let timestampStart;
@@ -302,8 +303,14 @@ socket.on('message', function (message){
       trace('Sending file');
       const file = fileInput.files[0];
       console.log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
-
-
+      sendFileChannel.send(JSON.stringify({
+        fileName: file.name,
+        fileSize: file.size
+      }));
+      trace(JSON.stringify({
+              fileName: file.name,
+              fileSize: file.size
+            }));
       // Handle 0 size files.
       statusMessage.textContent = '';
       downloadAnchor.textContent = '';
@@ -350,25 +357,26 @@ socket.on('message', function (message){
     }
 
     function onReceiveMessageCallback(event) {
-      console.log(`Received Message ${event.data.byteLength}`);
-      receiveBuffer.push(event.data);
-      receivedSize += event.data.byteLength;
-      receiveProgress.value = receivedSize;
-      trace('Received size ' + receivedSize);
-
-      // we are assuming that our signaling protocol told
-      // about the expected file size (and name, hash, etc).
-      const file = fileInput.files[0];
-      if (receivedSize === file.size) {
-        const received = new Blob(receiveBuffer);
+      if (downloadInProgress === false) {
+        incomingFileInfo = JSON.parse(event.data.toString() );
+        const file = fileInput.files[0];
         receiveBuffer = [];
-
+        downloadInProgress = true;
+        console.log( 'incoming file ' + incomingFileInfo.fileName + ' of ' + incomingFileInfo.fileSize + ' bytes' );
+      } else {
+        console.log(`Received Message ${event.data.byteLength}`);
+        receiveBuffer.push(event.data);
+        receivedSize += event.data.byteLength;
+        receiveProgress.value = receivedSize;
+        trace('Received size ' + receivedSize);
+      }
+      if (receivedSize === incomingFileInfo.fileSize) {
+        const received = new Blob(receiveBuffer);
         downloadAnchor.href = URL.createObjectURL(received);
-        downloadAnchor.download = file.name;
+        downloadAnchor.download = incomingFileInfo.fileName;
         downloadAnchor.textContent =
-        `Click to download '${file.name}' (${file.size} bytes)`;
+        `Click to download '${incomingFileInfo.fileName}' (${incomingFileInfo.fileSize} bytes)`;
         downloadAnchor.style.display = 'block';
-
       }
 
     }
