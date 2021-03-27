@@ -22,6 +22,7 @@
   align-items: stretch;
 
 }
+
 .videospacesucio {
     flex: 2;
     border: 2px solid yellow;
@@ -39,16 +40,17 @@
   float: left;
 }
 .localvideoarea{
-  height: 100px;
+  height: 180px;
   width: 200px;
   float: left;
-  background-color: #CFC;
-  border: 5px solid white;
+  border: 3px solid white;
 }
 .remotevideoarea{
-  height: 300px;
-  width: 400px;
-  background-color: #FF9;
+  position: absolute;
+  left: 0px;
+  height: 600px;
+  width: 800px;
+  z-index: -1;
 }
 
 .chatspacesucio {
