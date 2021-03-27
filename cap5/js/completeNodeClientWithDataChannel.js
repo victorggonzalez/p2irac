@@ -247,10 +247,14 @@ function createPeerConnection() {
 // Data channel management
 function sendData() {
   var data = sendTextarea.value;
+  sendTextarea.value = '';
   if(isInitiator){
     sendChannel.send(data);
-    chatChannel.send(data);
-  } else receiveChannel.send(data);
+    receiveTextarea.value += 'Me:' + data + '\n';
+  } else{
+    receiveChannel.send(data);
+    receiveTextarea.value += 'Me:' + data + '\n';
+  }
   trace('Sent data: ' + data);
 }
 
@@ -268,8 +272,7 @@ function gotReceiveChannel(event) {
 
 function handleMessage(event) {
   trace('Received message: ' + event.data);
-  receiveTextarea.value += event.data + '\n';
-  chatArea.value += event.data + '\n';
+  receiveTextarea.value += 'Remote:' + event.data + '\n';
   trace('handleMessage');
 
 
@@ -284,9 +287,7 @@ function handleSendChannelStateChange() {
     dataChannelSend.focus();
     dataChannelSend.placeholder = "";
     sendButton.disabled = false;
-    chatInput.disabled = false;
-    chatInput.value = 'Hi, ' + userid;
-    chatInput.focus();
+
   } else {
     dataChannelSend.disabled = true;
     sendButton.disabled = true;
