@@ -287,6 +287,7 @@ socket.on('message', function (message){
     // Data channel management
     function sendData() {
       var data = sendTextarea.value;
+      //borrar contenido de sendTextarea una vez se ha enviado el mensaje
       sendTextarea.value = '';
       if(isInitiator){
         sendChannel.send(data);
@@ -300,6 +301,7 @@ socket.on('message', function (message){
 
     function sendDataFile() {
       trace('Sending file');
+      //obtener el fichero
       const file = fileInput.files[0];
       console.log(`File is ${[file.name, file.size, file.type, file.lastModified].join(' ')}`);
       if(isInitiator){
@@ -308,21 +310,19 @@ socket.on('message', function (message){
           fileSize: file.size
         }));
         trace(JSON.stringify({
-                fileName: file.name,
-                fileSize: file.size
-              }));
+          fileName: file.name,
+          fileSize: file.size
+        }));
       } else{
         receiveFileChannel.send(JSON.stringify({
           fileName: file.name,
           fileSize: file.size
         }));
         trace(JSON.stringify({
-                fileName: file.name,
-                fileSize: file.size
-              }));
+          fileName: file.name,
+          fileSize: file.size
+        }));
       }
-
-
       // Handle 0 size files.
       statusMessage.textContent = '';
       downloadAnchor.textContent = '';
@@ -410,7 +410,7 @@ socket.on('message', function (message){
       }
     }
 
-
+    //Mostrar el mensaje en el area de chatdel usuario que escribe
     function handleMessage(event) {
       trace('Received message: ' + event.data);
       receiveTextarea.value += 'Remote:' + event.data + '\n';
